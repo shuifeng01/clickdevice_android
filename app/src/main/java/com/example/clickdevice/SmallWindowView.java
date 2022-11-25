@@ -133,8 +133,8 @@ public class SmallWindowView extends LinearLayout {
                 lastWmParamsY = wmParams.y;
                 mTouchStartX = event.getRawX();
                 mTouchStartY = event.getRawY();
-                Log.i("startP", "startX" + mTouchStartX + "====startY" + mTouchStartY);
-                Log.i("startP", "lastWmParamsX" + lastWmParamsX + "====lastWmParamsY" + lastWmParamsY);
+                //Log.i("startP", "startX" + mTouchStartX + "====startY" + mTouchStartY);
+                //Log.i("startP", "lastWmParamsX" + lastWmParamsX + "====lastWmParamsY" + lastWmParamsY);
                 break;
 
             case MotionEvent.ACTION_MOVE:
@@ -198,7 +198,7 @@ public class SmallWindowView extends LinearLayout {
 //        }
         wmParams.x = lastWmParamsX + dx;
         wmParams.y = lastWmParamsY + dy;
-        Log.i("winParams", "lastWmParamsX:" + lastWmParamsX + "x : " + wmParams.x + "y :" + wmParams.y + "  dx:" + dx + "  dy :" + dy);
+        //Log.i("winParams", "lastWmParamsX:" + lastWmParamsX + "x : " + wmParams.x + "y :" + wmParams.y + "  dx:" + dx + "  dy :" + dy);
         wm.updateViewLayout(this, wmParams);
         //刷新显示
     }

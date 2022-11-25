@@ -13,6 +13,7 @@ import android.os.Message;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private int OVERLAY_PERMISSION_REQ_CODE = 2;
     private WindowManager.LayoutParams btn_layoutParams;
-    private LinearLayout btn_windowView;
+    private SmallWindowView btn_windowView;
     /* access modifiers changed from: private */
     public EditText editText_number;
     /* access modifiers changed from: private */
@@ -216,16 +217,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        textView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-               if (isRun){
-                   stopTime=System.currentTimeMillis();
-                   MainActivity.this.isRun = false;
-                   return true;
-               }
-                return false;
-            }
+        textView.setOnTouchListener((v, event) -> {
+           if (isRun){
+               stopTime=System.currentTimeMillis();
+               MainActivity.this.isRun = false;
+               return true;
+           }
+            return false;
         });
     }
 
@@ -240,36 +238,26 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("WrongConstant")
     public void initSmallViewLayout() {
         this.windowView = (SmallWindowView) LayoutInflater.from(this).inflate(R.layout.window_a, (ViewGroup) null);
-        this.btn_windowView = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.window_b, (ViewGroup) null);
+        this.btn_windowView = (SmallWindowView) LayoutInflater.from(this).inflate(R.layout.window_b, (ViewGroup) null);
         this.wm = (WindowManager) getSystemService("window");
         this.mLayoutParams = new WindowManager.LayoutParams(-2, -2, 2003, 8, -3);
-        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(-2, -2, 2003, 8, -3);
-        this.btn_layoutParams = layoutParams;
-        layoutParams.gravity = 49;
+        //WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(-2, -2, 2003, 8, -3);
+        this.btn_layoutParams = new WindowManager.LayoutParams(-2, -2, 2003, 8, -3);
+        btn_layoutParams.gravity = 49;
         this.mLayoutParams.gravity = 0;
         this.windowView.setWm(this.wm);
         this.windowView.setWmParams(this.mLayoutParams);
-    }
-
-    public void alertWindow() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (Build.VERSION.SDK_INT >= 26) {
-                this.mLayoutParams.type = 2038;
-                this.btn_layoutParams.type = 2038;
-            }
-            requestDrawOverLays();
-        } else if (Build.VERSION.SDK_INT >= 21) {
-            ActivityCompat.requestPermissions(this, new String[]{"android.permission.SYSTEM_ALERT_WINDOW"}, 1);
-        }
+        this.btn_windowView.setWm(this.wm);
+        this.btn_windowView.setWmParams(this.btn_layoutParams);
     }
 
     public void dismissWindow() {
-        LinearLayout linearLayout;
+        SmallWindowView linearLayout1;
         SmallWindowView smallWindowView;
         if (!(this.wm == null || (smallWindowView = this.windowView) == null || smallWindowView.getWindowId() == null)) {
             this.wm.removeView(this.windowView);
         }
-        if (this.wm != null && (linearLayout = this.btn_windowView) != null && linearLayout.getWindowId() != null) {
+        if (this.wm != null && (linearLayout1 = this.btn_windowView) != null && linearLayout1.getWindowId() != null) {
             this.wm.removeView(this.btn_windowView);
         }
     }
@@ -283,31 +271,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressLint("WrongConstant")
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void requestDrawOverLays() {
-        if (!Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, "can not DrawOverlays", 0).show();
-            startActivityForResult(new Intent("android.settings.action.MANAGE_OVERLAY_PERMISSION", Uri.parse("package:" + getPackageName())), this.OVERLAY_PERMISSION_REQ_CODE);
-            return;
-        }
-        showWindow();
-
-    }
-
     /* access modifiers changed from: protected */
     @SuppressLint("WrongConstant")
     @Override
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != this.OVERLAY_PERMISSION_REQ_CODE) {
-            return;
-        }
-        if (!Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, "设置权限拒绝", 0).show();
-        } else {
-            Toast.makeText(this, "设置权限成功", 0).show();
+        if (requestCode == this.OVERLAY_PERMISSION_REQ_CODE) {
+            if (!Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "设置权限拒绝", 0).show();
+            } else {
+                Toast.makeText(this, "设置权限成功", 0).show();
+            }
         }
     }
 
@@ -321,9 +296,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showFloatWindows(Button button){
-        alertWindow();
-        this.isShow = true;
-        button.setText("隐藏悬浮窗");
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (Build.VERSION.SDK_INT >= 26) {
+                this.mLayoutParams.type = 2038;
+                this.btn_layoutParams.type = 2038;
+            }
+            if (!Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "没有悬浮窗权限",Toast.LENGTH_SHORT).show();
+                startActivityForResult(new Intent("android.settings.action.MANAGE_OVERLAY_PERMISSION",
+                        Uri.parse("package:" + getPackageName())), this.OVERLAY_PERMISSION_REQ_CODE);
+                return;
+            }
+            showWindow();
+            this.isShow = true;
+            button.setText("隐藏悬浮窗");
+        }else {
+            Log.e(TAG, "FloatWindows: Build.VERSION.SDK_INT < 23 " );
+        }
     }
 
     private void hideFloatWindows(Button button){
@@ -356,6 +345,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         powerKeyObserver.stopListen();
+        hideFloatWindows(btn_main);
     }
 
 
