@@ -10,6 +10,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.os.Build;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -37,8 +39,13 @@ public class MyService extends AccessibilityService {
 
     public MutableLiveData<String> pkgNameMutableLiveData = new MutableLiveData<>();
 
+    public static int maxStartDelay = 100;//点击最大延时
+    public static int maxDuration = 80;//点击最大持续时间
+    public static int minDuration = 20;//点击最小持续时间
 
-
+    private int startDelay = 0;
+    private int draution = 20;
+    private PointF pointClickPath = new PointF(2,2);
 
     @Override
     public void onCreate() {
@@ -51,17 +58,29 @@ public class MyService extends AccessibilityService {
         return myService != null;
     }
 
+    //防止检测
+    private void setRandomClick(){
+        startDelay = Util.randomInt(0,100);
+        draution = Util.randomInt(minDuration,maxDuration);
+        pointClickPath.x = Util.randomInt(2,20);
+        pointClickPath.y = Util.randomInt(2,20);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void dispatchGestureClick(float x, float y) {
+        setRandomClick();
         Path path = new Path();
+
         path.moveTo(x, y);
-        path.lineTo(x + 1, y + 1);
+        path.lineTo(x + pointClickPath.x/2, y + pointClickPath.y/2);
         dispatchGesture(new GestureDescription.Builder().addStroke(new GestureDescription.StrokeDescription
-                (path, 0, 20)).build(), null, null);
+                (path, startDelay, draution)).build(), null, null);
+        Log.d("Click","x >"+x+" y>"+y+" startDelay >"+startDelay+" draution>"+draution+" pointClickPath>"+pointClickPath.toString());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void dispatchGestureClick(float x, float y, int duration) {
+        setRandomClick();
         Path path = new Path();
         path.moveTo(x, y);
         path.lineTo(x + 1, y + 1);
