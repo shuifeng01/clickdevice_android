@@ -34,7 +34,7 @@ class RecordScriptListActivity : AppCompatActivity() {
         setContentView(R.layout.activity_record_script_list)
         recyclerView = findViewById(R.id.rv_script_list)
         findViewById<View>(R.id.btn_start).setOnClickListener {
-            startActivity(Intent(this@RecordScriptListActivity, RecordScriptActivity::class.java))
+            startActivity(Intent(this@RecordScriptListActivity, RecordRealScriptActivity::class.java))
         }
 
         val linearLayoutManager = LinearLayoutManager(this)
