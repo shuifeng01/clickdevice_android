@@ -42,6 +42,9 @@
         <activity android:name=".AC.ScriptActivity"
             android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
             android:screenOrientation="portrait"/>
+        <activity android:name=".AC.ScriptRealActivity"
+            android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
+            android:screenOrientation="portrait"/>
         <activity android:name=".AC.MainActivity"
             android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
             android:screenOrientation="portrait"

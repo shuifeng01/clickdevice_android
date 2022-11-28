@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout  xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+       <variable
+           name="ScriptList"
+           type="com.example.clickdevice.db.ScriptListBean" />
+    </data>
+
+    <LinearLayout
+        android:padding="10dp"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp">
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:gravity="center"
+                android:text="脚本名称:"
+                android:textColor="@color/blackLine"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/textView5"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:gravity="center_vertical"
+                android:text="@{ScriptList.name}"
+                android:textColor="@color/blackLine"
+                app:layout_constraintLeft_toRightOf="@id/tv_name"
+                app:layout_constraintTop_toTopOf="@id/tv_name" />
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="wrap_content"
+                android:layout_height="25dp"
+                android:gravity="center_vertical"
+                android:text="@{ScriptList.updateTime}"
+                android:textColor="@color/blackLine"
+                app:layout_constraintLeft_toRightOf="@id/tv_createtime"
+                app:layout_constraintTop_toTopOf="@id/tv_createtime"
+                android:layout_marginLeft="20dp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btn_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:layout_weight="1"
+                android:text="删除"
+                android:textColor="#aa0000"
+                android:background="@drawable/btn_ok_dialog_sign"
+                app:layout_constraintTop_toBottomOf="@id/tv_updatetime"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/btn_edit"/>
+            <Button
+                android:id="@+id/btn_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:text="编辑"
+                android:textColor="#00aa00"
+                android:background="@drawable/btn_ok_dialog_sign"
+                app:layout_constraintTop_toTopOf="@id/btn_delete"
+                app:layout_constraintLeft_toRightOf="@id/btn_delete"
+                app:layout_constraintRight_toLeftOf="@id/btn_select"/>
+            <Button
+                android:id="@+id/btn_select"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:text="选择"
+                android:visibility="gone"
+                android:textColor="#0044aa"
+                android:background="@drawable/btn_ok_dialog_sign"
+                app:layout_constraintTop_toTopOf="@id/btn_delete"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintLeft_toRightOf="@id/btn_edit"/>
+            <TextView
+                android:id="@+id/tvForTImeEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_weight="1"
+                android:text="循环次数:无限次"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</layout>

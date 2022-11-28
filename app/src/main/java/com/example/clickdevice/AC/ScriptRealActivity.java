@@ -30,26 +30,27 @@ import androidx.lifecycle.Observer;
 import com.Ohuang.ilivedata.LiveDataBus;
 import com.example.clickdevice.MyService;
 import com.example.clickdevice.PowerKeyObserver;
+import com.example.clickdevice.R;
+import com.example.clickdevice.ScriptExecutor;
 import com.example.clickdevice.SmallWindowView;
 import com.example.clickdevice.Util;
 import com.example.clickdevice.bean.ScriptCmdBean;
-import com.example.clickdevice.ScriptExecutor;
+import com.example.clickdevice.dialog.DialogHelper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.example.clickdevice.R;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.ScriptInterFace {
+public class ScriptRealActivity extends AppCompatActivity implements ScriptExecutor.ScriptInterFace {
     private int OVERLAY_PERMISSION_REQ_CODE = 2;
     private WindowManager.LayoutParams btn_layoutParams;
     private SmallWindowView btn_windowView;
-    private EditText editText_num;
-    private EditText editText_time;
+    private Button btn_script_openScript;
+
     /* access modifiers changed from: private */
     @SuppressLint("HandlerLeak")
     public Handler handler = new Handler() {
@@ -57,8 +58,8 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             if (msg.what == 0) {
-                ScriptActivity.this.isRun = false;
-                ScriptActivity.this.tv_bw.setText("开始");
+                ScriptRealActivity.this.isRun = false;
+                //ScriptRealActivity.this.tv_bw.setText("开始");
             }
         }
     };
@@ -77,13 +78,13 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            for (int j = 0; j < ScriptActivity.this.num; j++) {
+            for (int j = 0; j < ScriptRealActivity.this.num; j++) {
 
                 scriptExecutor.run(mData);
 
                 int i2 = 0;
-                while (i2 < ScriptActivity.this.time / 100) {
-                    if (ScriptActivity.this.isRun) {
+                while (i2 < ScriptRealActivity.this.time / 100) {
+                    if (ScriptRealActivity.this.isRun) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e2) {
@@ -95,28 +96,23 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
                     }
                 }
                 try {
-                    Thread.sleep((long) (ScriptActivity.this.time % 100));
+                    Thread.sleep((long) (ScriptRealActivity.this.time % 100));
                 } catch (InterruptedException e3) {
                     e3.printStackTrace();
                 }
             }
-            ScriptActivity.this.handler.sendEmptyMessage(0);
+            ScriptRealActivity.this.handler.sendEmptyMessage(0);
         }
     };
+
     /* access modifiers changed from: private */
     public ScriptExecutor scriptExecutor;
     private ExecutorService singleThreadExecutor;
     /* access modifiers changed from: private */
     public int time;
     /* access modifiers changed from: private */
-    public TextView tv_bw;
     private WindowManager wm;
-    private TextView textView;
-    private TextView tv_name;
-    private TextView tv_copy;
-    private CheckBox checkBox;
     private String json;
-    private Button btn_script_openScript;
     private PowerKeyObserver powerKeyObserver;//检测电源键是否被按下
     private Observer<String> observer;
 
@@ -124,31 +120,13 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView((int) R.layout.activity_script);
+        setContentView((int) R.layout.activity_real_script);
         initSmallViewLayout();
-        this.editText_num = (EditText) findViewById(R.id.edit_script_number);
-        this.editText_time = (EditText) findViewById(R.id.edit_script_time);
-        btn_script_openScript = findViewById(R.id.btn_script_openScript);
-        textView = findViewById(R.id.tv_script_code);
-        tv_name = findViewById(R.id.tv_name);
-        tv_copy = findViewById(R.id.tv_copy);
-        checkBox = findViewById(R.id.cb_reChange_app);
-        tv_copy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    Util.copyText(textView.getText(), ScriptActivity.this);
-                    Toast.makeText(ScriptActivity.this, "复制成功", Toast.LENGTH_LONG).show();
-                } catch (Exception e) {
-                    Toast.makeText(ScriptActivity.this, "复制失败" + e.toString(), Toast.LENGTH_LONG).show();
-                }
-
-            }
-        });
         this.singleThreadExecutor = Executors.newSingleThreadExecutor();
         if (this.btn_windowView != null) {
             initBtnWindowsView();
         }
+        btn_script_openScript = findViewById(R.id.btn_script_openScript);
         this.scriptExecutor = new ScriptExecutor(this);
         initEvent();
 
@@ -166,26 +144,14 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
         LiveDataBus.get().with("json", String.class).observe(this, new Observer<String>() {
             @Override
             public void onChanged(String s) {
-                json = s;
-                textView.setText(json);
-                Gson gson = new Gson();
-                List<ScriptCmdBean> list = gson.fromJson(json, new TypeToken<List<ScriptCmdBean>>() {
-                }.getType());
-                if (list == null || list.size() == 0) {
-                    tv_copy.setVisibility(View.GONE);
-                    Toast.makeText(ScriptActivity.this, "脚本为空或json格式有问题", Toast.LENGTH_SHORT).show();
-                }
-                tv_copy.setVisibility(View.VISIBLE);
-                mData = list;
+
             }
         });
         LiveDataBus.get().with("scriptName", String.class).observe(this, new Observer<String>() {
             @Override
             public void onChanged(String s) {
                 if (TextUtils.isEmpty(s)) {
-                    tv_name.setText("");
                 } else {
-                    tv_name.setText("脚本名称:" + s);
                 }
             }
         });
@@ -196,7 +162,6 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
                 if (checkAppChange) {
                     if (!pkgNameNow.equals(thisPkgName)) {
                         if (isRun) {
-                            stopTime = System.currentTimeMillis();
                             isRun = false;
                             handler.sendEmptyMessage(0);
                         }
@@ -208,13 +173,11 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
     }
 
     public void startScriptWindow(View view) {
-
         if (!this.isShow) {
             showFloatWindows(btn_script_openScript);
         } else {
             hideFloatWindows(btn_script_openScript);
         }
-
     }
 
     private void showFloatWindows(Button button) {
@@ -234,48 +197,17 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
         hideFloatWindows(btn_script_openScript);
     }
 
-    private long stopTime = 0;
-
-    @SuppressLint("WrongConstant")
     private void initBtnWindowsView() {
-        TextView textView = (TextView) this.btn_windowView.findViewById(R.id.tv_win_b);
-        this.tv_bw = textView;
-        textView.setOnClickListener(v -> {
-                    if (isRun) {
-                        stopTime = System.currentTimeMillis();
-                        isRun = false;
-                        handler.sendEmptyMessage(0);
+        TextView recordList = (TextView) this.btn_windowView.findViewById(R.id.tv_record_list);
+        TextView record = (TextView) this.btn_windowView.findViewById(R.id.tv_record);
+        recordList.setOnClickListener(v -> {
+            DialogHelper.RecordListDialogShow(this, v1 -> {
+                //test--         start
 
-                    } else if (!MyService.isStart()) {
-                        Toast.makeText(ScriptActivity.this, "请手动开启辅助功能，若已开启请重启应用再试一次。", Toast.LENGTH_LONG).show();
-                    } else if (mData == null) {
-                        Toast.makeText(ScriptActivity.this, "请选择要执行的脚本", 0).show();
-                    } else if (stopTime + 2000 > System.currentTimeMillis()) {
-                        Toast.makeText(ScriptActivity.this, "点太快了,休息一下吧", Toast.LENGTH_SHORT).show();
-                    } else {
-                        String s1 = editText_time.getText().toString();
-                        String s2 = editText_num.getText().toString();
-                        checkAppChange = checkBox.isChecked();
-                        thisPkgName = pkgNameNow;
-                        time = Integer.parseInt(TextUtils.isEmpty(s1) ? "1000" : s1);
-                        num = Integer.parseInt(TextUtils.isEmpty(s2) ? "0" : s2);
-                        tv_bw.setText("停止");
-                        isRun = true;
-                        singleThreadExecutor.execute(runnable);
-                    }
-                }
-        );
-        textView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (isRun) {
-                    stopTime = System.currentTimeMillis();
-                    isRun = false;
-                    handler.sendEmptyMessage(0);
-                    return true;
-                }
-                return false;
-            }
+            });
+        });
+        record.setOnClickListener(v -> {
+            Toast.makeText(this,"开始录制",Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -319,7 +251,7 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
 
     @SuppressLint("WrongConstant")
     public void initSmallViewLayout() {
-        this.btn_windowView = (SmallWindowView) LayoutInflater.from(this).inflate(R.layout.window_b, (ViewGroup) null);
+        this.btn_windowView = (SmallWindowView) LayoutInflater.from(this).inflate(R.layout.window_record, (ViewGroup) null);
         this.wm = (WindowManager) getSystemService("window");
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(-2, -2, 2003, 8, -3);
         this.btn_layoutParams = layoutParams;
@@ -388,7 +320,6 @@ public class ScriptActivity extends AppCompatActivity implements ScriptExecutor.
     /* access modifiers changed from: protected */
     @Override
     public void onDestroy() {
-        hideFloatWindows(btn_script_openScript);
         if(MyService.isStart()) {
             MyService.myService.pkgNameMutableLiveData.removeObserver(observer);
         }

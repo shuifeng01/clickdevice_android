@@ -331,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startScriptAc(View view) {
-        startActivity(new Intent(this, ScriptActivity.class));
+        startActivity(new Intent(this, ScriptRealActivity.class));
         hideFloatWindows(btn_main);
     }
 

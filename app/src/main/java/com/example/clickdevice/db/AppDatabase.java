@@ -9,11 +9,11 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {ScriptDataBean.class,RecordScriptBean.class} ,version = 2, exportSchema = false)
+@Database(entities = {ScriptDataBean.class,RecordScriptBean.class,ScriptListBean.class} ,version = 3, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase appDatabase;
     public abstract ScriptDao getScriptDao();
-
+    public abstract ScriptListDao getScriptListDao();
     public abstract RecordScriptDao getRecordScriptDao();
 
     public static Migration migration_1_2=new Migration(1,2) {

@@ -6,7 +6,7 @@ import android.content.Context;
 import com.example.clickdevice.db.AppDatabase;
 
 public class MyApp extends Application {
-    private AppDatabase appDatabase;
+    private static AppDatabase appDatabase;
     private Context context;
 
     @Override
@@ -16,7 +16,7 @@ public class MyApp extends Application {
         appDatabase=AppDatabase.getInstance(this);
     }
 
-    public AppDatabase getAppDatabase(){
+    public static AppDatabase getAppDatabase(){
         return appDatabase;
     }
 }
