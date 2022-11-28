@@ -29,6 +29,10 @@
             android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
             android:exported="false" />
         <activity
+            android:name=".AC.RecordRealScriptActivity"
+            android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
+            android:exported="false" />
+        <activity
             android:name=".AC.RecordScriptActivity"
             android:screenOrientation="portrait"
             android:configChanges="orientation|fontScale|navigation|keyboardHidden|keyboard|mcc|mnc|locale|smallestScreenSize"
