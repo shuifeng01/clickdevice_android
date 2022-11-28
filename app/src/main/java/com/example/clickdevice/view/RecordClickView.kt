@@ -9,11 +9,10 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import com.example.clickdevice.Util
-import com.example.clickdevice.bean.Bean
+import com.example.clickdevice.bean.RecordBean
 import com.example.clickdevice.bean.RecordScriptCmd
 
 class RecordClickView : View {
-    private val CLICK_SPACING_TIME: Long = 300
 
     private val LONG_PRESS_TIME: Long = 500
 
@@ -44,15 +43,15 @@ class RecordClickView : View {
     }
 
     private var scriptPath: Path? = null
-    private var data: MutableList<Bean>? = mutableListOf()
-    private var enable = false
-
+    private var data: MutableList<RecordBean> = mutableListOf()
+    private var enable = true
+    private var isRecording = false
     @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas?) {
-
+        if (isRecording.not())return
         initPaint()
-        data?.forEachIndexed { index, item->
-            var point = PointF(item.x.toFloat(), item.y.toFloat() - Util.getStatusHeight(context))
+        data.forEachIndexed { index, item->
+            var point = PointF(item.x1.toFloat(), item.y1.toFloat() - Util.getStatusHeight(context))
             canvas?.drawCircle(point.x, point.y, 30f, paint)
             var text = "${index+1}"
             val strWidth = paintText.measureText(text)
@@ -65,82 +64,79 @@ class RecordClickView : View {
 
     var scriptListener: ScriptListener? = null
     private var downTime = 0L
+    private var upTime = 0L
     private var point_down:PointF = PointF()
     private var point_up:PointF = PointF()
+    private var preClickTime = 0L
+    private var delayClickTime = 0
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (!enable) {
              return false
         }
+        //Log.d("RecordClickView", "onTouchEvent ${event?.action}   x>${event?.x} y>${event?.y}")
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 downTime = SystemClock.uptimeMillis()
                 scriptListener?.onActionDown()
                 scriptPath = Path()
                 point_down.set(event.rawX, event.rawY)
-                scriptPath!!.moveTo(event.rawX, event.rawY)
-                //data?.add(Bean(event.rawX.toInt(), event.rawY.toInt()))
+                scriptPath?.moveTo(event.rawX, event.rawY)
             }
             MotionEvent.ACTION_MOVE -> {
                 scriptPath?.lineTo(event.rawX, event.rawY)
-                //data?.add(Bean(event.rawX.toInt(), event.rawY.toInt()))
             }
             MotionEvent.ACTION_UP -> {
+                upTime = SystemClock.uptimeMillis()
                 point_up.set(event.rawX, event.rawY)
                 //将事件传递下去
                 scriptListener?.apply {
                     val createGestureCMD = RecordScriptCmd.createGestureCMD(
-                            data,
+                            mutableListOf(),
                             (SystemClock.uptimeMillis() - downTime).toInt()
                     )
                     onUpdate(createGestureCMD, scriptPath!!)
                 }
                 if (isMoved().not()){
                     //如果按住的时间超过了长按时间，不处理
-                    if (SystemClock.uptimeMillis() - downTime > LONG_PRESS_TIME){
+                    if (upTime - downTime > LONG_PRESS_TIME){
                         //长按事件
 
                     }else{
                         //正常点击事件
-                        data?.add(Bean(event.rawX.toInt(), event.rawY.toInt()))
+                        delayClickTime = (SystemClock.uptimeMillis() - preClickTime).toInt()
+                        preClickTime = SystemClock.uptimeMillis()
 
+                        var recordData = RecordBean.BuildRandomClickCMD(point_down.x.toInt(),
+                                point_down.y.toInt(), point_up.x.toInt(), point_up.y.toInt(),
+                                (upTime - downTime).toInt(),delayClickTime)
+                        data?.add(recordData)
+                        scriptListener?.onActionClick(data)
                     }
                 }else{
                     //滑动事件--另作处理
 
                 }
-//                scriptPath?.lineTo(event.rawX, event.rawY)
-//                data?.add(Bean(event.rawX.toInt(), event.rawY.toInt()))
-//                scriptListener?.apply {
-//                    val createGestureCMD = RecordScriptCmd.createGestureCMD(
-//                            data,
-//                            (SystemClock.uptimeMillis() - downTime).toInt()
-//                    )
-//                    onUpdate(createGestureCMD, scriptPath!!)
-//                }
             }
         }
         invalidate()
-        return false
+        return true
     }
 
-    override fun setOnTouchListener(l: OnTouchListener?) {
-        super.setOnTouchListener(l)
-    }
-    fun initRecordClick() {
+    fun startRecord() {
         data?.clear()
-        enable = true;
+        isRecording = true
     }
     fun finishRecordClick(){
         data?.clear()
-        enable = false;
+        isRecording = false
     }
     interface ScriptListener {
-        fun onActionDown() {
-
-        }
+        fun onActionDown()
 
         fun onUpdate(recordScriptCmd: RecordScriptCmd, path: Path)
+
+        fun onActionClick(recordList: MutableList<RecordBean>)
     }
 
     fun isMoved():Boolean {

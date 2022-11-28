@@ -2,8 +2,8 @@ package com.example.clickdevice.AC
 
 import android.content.Intent
 import android.graphics.Path
-import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,23 +13,21 @@ import com.Ohuang.ilivedata.MyLiveData
 import com.example.clickdevice.MyService
 import com.example.clickdevice.RecordScriptExecutor
 import com.example.clickdevice.adapter.RecordCMDAdapter
+import com.example.clickdevice.bean.RecordBean
 import com.example.clickdevice.bean.RecordScriptCmd
 import com.example.clickdevice.databinding.ActivityRecordScriptBinding
 import com.example.clickdevice.databinding.WindowBBinding
-import com.example.clickdevice.databinding.WindowCanvesBinding
 import com.example.clickdevice.databinding.WindowRecordCanvesBinding
 import com.example.clickdevice.db.RecordScriptBean
 import com.example.clickdevice.helper.IOCoroutineContext
 import com.example.clickdevice.helper.SmallWindowsHelper
 import com.example.clickdevice.view.RecordClickView
-import com.example.clickdevice.view.RecordTouchView
+import com.example.clickdevice.vm.RecordRealScriptViewModel
 import com.example.clickdevice.vm.RecordScriptViewModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import java.lang.Runnable
 
 class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.RecordScriptInterface {
 
@@ -38,7 +36,7 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
     private  var playSmallWindowsHelper: SmallWindowsHelper?=null
     private var smallWindowBinding: WindowRecordCanvesBinding? = null
     private var binding: ActivityRecordScriptBinding? = null
-    private var viewModel: RecordScriptViewModel? = null
+    private var viewModel: RecordRealScriptViewModel? = null
     private var windowBBinding: WindowBBinding? = null
 
     private var runnable1: Runnable? = null
@@ -59,7 +57,7 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
         super.onCreate(savedInstanceState)
         binding = ActivityRecordScriptBinding.inflate(layoutInflater)
         setContentView(binding?.root)
-        viewModel = ViewModelProvider(this)[RecordScriptViewModel::class.java]
+        viewModel = ViewModelProvider(this)[RecordRealScriptViewModel::class.java]
         initEvent()
         initSmallWindows()
         initPlaySmallWindows()
@@ -73,7 +71,7 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
                     binding?.editName?.setText(name)
                     val gson = Gson()
                     viewModel!!.data = gson.fromJson(it.scriptJson,
-                        object : TypeToken<List<RecordScriptCmd>>() {}.type)
+                            object : TypeToken<List<RecordScriptCmd>>() {}.type)
                     recordCMDAdapter!!.setmData(viewModel!!.data)
                 }
         }
@@ -81,7 +79,7 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
 
     private fun initRv() {
         binding?.rvScriptEdit?.layoutManager=LinearLayoutManager(this)
-        recordCMDAdapter= RecordCMDAdapter(viewModel!!.data,this)
+        recordCMDAdapter= RecordCMDAdapter(viewModel!!.data, this)
         viewModel?.recordCMDAdapter=recordCMDAdapter
         binding?.rvScriptEdit?.adapter=recordCMDAdapter
     }
@@ -152,6 +150,9 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
 
             }
         }
+        windowBBinding?.root?.wm = getSystemService("window") as WindowManager
+
+        windowBBinding?.root?.setWmParams(mLayoutParams)
     }
 
 
@@ -170,7 +171,7 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
             object : RecordClickView.ScriptListener {
 
                 override fun onActionDown() {
-                    viewModel?.addDelayTime()
+                    //viewModel?.addDelayTime()
                 }
 
 
@@ -178,23 +179,32 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
                     notTouch()
                     if (MyService.isStart()) {
                         dispatchGesturePath(path, recordScriptCmd)
-                        viewModel?.addRecordScriptCmd(recordScriptCmd)
+                        //viewModel?.addRecordScriptCmd(recordScriptCmd)
                     }
+                }
+
+                override fun onActionClick(recordList: MutableList<RecordBean>) {
+                    Log.d("onActionClick",recordList.toString())
+
+
                 }
             }
 
         smallWindowBinding?.tvStart?.setOnClickListener {
             viewModel?.apply {
                 if (isRecord) {
+                    smallWindowBinding?.recordingLayout?.visibility = View.GONE
                     smallWindowBinding?.tvStart?.text = "开始"
                     stopRecord()
                     binding?.root?.removeCallbacks(runnable1)
                     binding?.root?.removeCallbacks(runnable2)
                     smallWindowBinding?.recordClickView?.finishRecordClick()
                 } else {
-                    smallWindowBinding?.recordClickView?.initRecordClick()
+                    smallWindowBinding?.recordingLayout?.visibility = View.VISIBLE
+                    smallWindowBinding?.recordClickView?.startRecord()
                     smallWindowBinding?.tvStart?.text = "停止"
                     startRecord()
+                    recordingTask()
                 }
 
             }
@@ -211,7 +221,21 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
         }
 
     }
-
+    var recordTime:Long = 0L
+    private fun recordingTask(){
+        recordTime =0
+        GlobalScope.launch(Dispatchers.IO) {
+            while (viewModel?.isRecord == true) {
+                delay(10)
+                recordTime++;
+                 withContext(coroutineContext){
+                     this.launch (Dispatchers.Main){
+                         smallWindowBinding?.tvTime?.text = "${recordTime/100/60}:${recordTime/100%60}:${recordTime%100}"
+                     }
+                 }
+            }
+        }
+    }
     private fun closeSmallWindow() {
         binding?.root?.removeCallbacks(runnable1)
         binding?.root?.removeCallbacks(runnable2)
@@ -222,8 +246,8 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
     }
 
     private fun dispatchGesturePath(
-        path: Path,
-        recordScriptCmd: RecordScriptCmd
+            path: Path,
+            recordScriptCmd: RecordScriptCmd
     ) {
         binding?.root?.removeCallbacks(runnable1)
         binding?.root?.removeCallbacks(runnable2)
@@ -234,11 +258,11 @@ class RecordRealScriptActivity : AppCompatActivity(), RecordScriptExecutor.Recor
         runnable1 = Runnable {
             MyService.myService.dispatchGesture(path, recordScriptCmd.duration)
             binding?.root?.postDelayed(
-                runnable2,
-                recordScriptCmd.duration.toLong()
+                    runnable2,
+                    recordScriptCmd.duration.toLong()
             )
         }
-        binding?.root?.postDelayed(runnable1, 1)
+        binding?.root?.postDelayed(runnable1, 0)
     }
 
 

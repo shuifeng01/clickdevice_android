@@ -13,6 +13,31 @@
         android:background="#30005080"/>
 
     <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/recordingLayout"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:background="#60000000"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintLeft_toRightOf="@+id/layout1"
+        app:layout_constraintTop_toTopOf="@+id/layout1">
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00:00"
+            android:textSize="16dp"
+            android:textColor="@color/btn_color"/>
+        <TextView
+            android:id="@+id/tv_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="点击:（x，y）"
+            android:textSize="16dp"
+            android:textColor="@color/btn_color"/>
+    </LinearLayout>
+    <LinearLayout
         android:id="@+id/layout1"
         android:layout_width="80dp"
         android:layout_height="wrap_content"
